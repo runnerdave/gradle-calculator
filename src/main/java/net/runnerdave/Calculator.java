@@ -33,12 +33,13 @@ public class Calculator {
         final CommandLineParser cmdLineParser = new DefaultParser();
         CommandLine commandLine = null;
         try {
-            commandLine = cmdLineParser.parse(options, commandLineArguments);
-            if (commandLine.hasOption("h")) {
+            if (checkForHelp(commandLineArguments)) {
                 printHelp(generateOptions(), System.out);
-            } else if(commandLine.hasOption("u")) {
+            } else if (checkForUsage(commandLineArguments)) {
                 printUsage(generateOptions(), System.out);
             } else {
+                commandLine = cmdLineParser.parse(options, commandLineArguments);
+
                 if (commandLine.hasOption("v1") && commandLine.hasOption("v2") && commandLine.hasOption("op")) {
                     Operation op = Operation.parseOperation(commandLine.getOptionValue("op"));
                     Integer value1 = Integer.valueOf(commandLine.getOptionValue("v1"));
@@ -51,7 +52,7 @@ public class Calculator {
 
         } catch (ParseException | RuntimeException parseException) {
             String message = parseException.getMessage();
-            if(parseException instanceof NullPointerException) {
+            if (parseException instanceof NullPointerException) {
                 message = "Invalid operation.";
             }
             log.severe("ERROR: Unable to parse command-line arguments "
@@ -68,37 +69,33 @@ public class Calculator {
      */
     private static Options generateOptions() {
         final Option operation = Option.builder("op")
-                .required(false)
-                .longOpt("--operation")
+                .required(true)
+                .longOpt("operation")
                 .hasArg()
                 .desc("Operation to be performed.")
                 .build();
 
         final Option value1 = Option.builder("v1")
-                .required(false)
-                .longOpt("--value1")
+                .required(true)
+                .longOpt("value1")
                 .hasArg()
                 .desc("1st Operand to calculate.")
                 .build();
 
         final Option value2 = Option.builder("v2")
-                .required(false)
-                .longOpt("--value2")
+                .required(true)
+                .longOpt("value2")
                 .hasArg()
                 .desc("2nd Operand to calculate.")
                 .build();
 
         final Option helpOption = Option.builder("h")
-                .required(false)
-                .longOpt("--help")
-                .hasArg(false)
+                .longOpt("help")
                 .desc("help!!.")
                 .build();
 
         final Option usageOption = Option.builder("u")
-                .required(false)
-                .longOpt("--usage")
-                .hasArg(false)
+                .longOpt("usage")
                 .desc("usage.")
                 .build();
 
@@ -109,6 +106,28 @@ public class Calculator {
         options.addOption(value1);
         options.addOption(value2);
         return options;
+    }
+
+    private static boolean checkForHelp(String[] args) {
+        boolean hasHelp = false;
+        for (String option: args
+             ) {
+            if(option.equalsIgnoreCase("-h") || option.equalsIgnoreCase("--help")) {
+                hasHelp = true;
+            }
+        }
+        return hasHelp;
+    }
+
+    private static boolean checkForUsage(String[] args) {
+        boolean hasUsage = false;
+        for (String option: args
+                ) {
+            if(option.equalsIgnoreCase("-u") || option.equalsIgnoreCase("--usage")) {
+                hasUsage = true;
+            }
+        }
+        return hasUsage;
     }
 
     /**
@@ -133,14 +152,13 @@ public class Calculator {
         formatter.printHelp(syntax, usageHeader, options, usageFooter);
     }
 
-    private static void printUsage(final Options options, final PrintStream out)
-    {
+    private static void printUsage(final Options options, final PrintStream out) {
         final HelpFormatter formatter = new HelpFormatter();
         final String syntax = "Main";
         out.println("\n=====");
         out.println("USAGE");
         out.println("=====");
-        final PrintWriter pw  = new PrintWriter(out);
+        final PrintWriter pw = new PrintWriter(out);
         formatter.printUsage(pw, 80, syntax, options);
         pw.flush();
     }
